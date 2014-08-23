@@ -60,34 +60,82 @@ var gl;
 			
 			var camMoveSpeed = 0.005;
 			
+			//cotg = 1/tg
+			var visibleHeight = 2 * 9 * Math.tan(22.5);
+			var visibleWidth = visibleHeight * 800.0 / 600.0;
+			
+			var playerRatioY = (player.posY - camPosY) / visibleHeight + 0.5;
+			var playerRatioX = (player.posX - camPosX) / visibleWidth + 0.5;
+			
+			
+			var mouseRatioX = mouseX / screenWidth
+			var mouseRatioY = 1 - mouseY / screenHeight;
+			
+			
+			var mouseXOnMap = camPosX + (mouseRatioX - 0.5) * visibleWidth;
+			var mouseYOnMap = camPosY + (mouseRatioY - 0.5) * visibleHeight;
+			
+			
+			
+			
+			var mouseSpeedX = mouseRatioX - playerRatioX;
+			var mouseSpeedY = mouseRatioY - playerRatioY;
+			
+			//console.log("Player: " + playerRatioX + " " + playerRatioY + " mouse: " + mouseRatioX + " " + mouseRatioY + " speed: " + mouseSpeedX + " " + mouseSpeedY);
+			
+			var atlo = Math.sqrt(mouseSpeedX * mouseSpeedX + mouseSpeedY * mouseSpeedY);
+			
+			var ratio = 1 / atlo;
+			
+			
+			var speedX = mouseSpeedX * ratio;
+			var speedY = mouseSpeedY * ratio;
+			
+			//console.log("Speed: " + speedX + " " + speedY);
+			
+			
+			
+			
+			// console.log(mouseRatioX + " " + mouseRatioY);
 			
 			var playerX = player.posX;
 			var playerY = player.posY;
 			
 			//LEFT
 			if (keys.currentlyPressedKeys[37]) {
-				playerX -= elapsed * camMoveSpeed;
+				playerX -= elapsed * camMoveSpeed * speedY;
+				playerY += elapsed * camMoveSpeed * speedX;
 			}
 			
 			//RIGHT
 			if (keys.currentlyPressedKeys[39]) {
-				playerX += elapsed * camMoveSpeed;
+				playerX += elapsed * camMoveSpeed * speedY;
+				playerY -= elapsed * camMoveSpeed * speedX;
 			}
 			
 			//UP
 			if (keys.currentlyPressedKeys[38]) {
-				playerY += elapsed * camMoveSpeed;
+				playerX += elapsed * camMoveSpeed * speedX;
+				playerY += elapsed * camMoveSpeed * speedY;
+				//playerY += elapsed * camMoveSpeed;
 			}
 			
 			//DOWN
 			if (keys.currentlyPressedKeys[40]) {
-				playerY -= elapsed * camMoveSpeed;
+				playerX -= elapsed * camMoveSpeed * speedX;
+				playerY -= elapsed * camMoveSpeed * speedY;
+				//playerY -= elapsed * camMoveSpeed;
 			}
 			
 			
 			
 			var newPlayerTileX = Math.floor(playerX + 0.5);
 			var newPlayerTileY = Math.floor(playerY + 0.5);
+			var mouseTileX = Math.floor(mouseXOnMap + 0.5);
+			var mouseTileY = Math.floor(mouseYOnMap + 0.5);
+			
+			
+			
 			
 			if (!walls[newPlayerTileX][newPlayerTileY] || walls[playerTileX][playerTileY]) {
 			
@@ -97,10 +145,17 @@ var gl;
 				player.posX = playerX;
 				player.posY = playerY;
 			}
-				
 			
-			playerHighlight.posX = playerTileX;
-			playerHighlight.posY = playerTileY;
+			
+			
+			if (Math.abs(newPlayerTileX - mouseTileX) == 1 || Math.abs(newPlayerTileY - mouseTileY) == 1) {
+				playerHighlight.posX = mouseTileX;
+				playerHighlight.posY = mouseTileY;
+			}
+			
+			
+			
+			
 			
 			if (player.posX - camPosX > 2) {
 				camPosX = player.posX - 2;
@@ -129,6 +184,9 @@ var gl;
 			camPosX = Math.min(maxCamX, camPosX);
 			camPosY = Math.max(minCamY, camPosY);
 			camPosY = Math.min(maxCamY, camPosY);
+			
+			//camPosX = player.posX;
+			//camPosY = player.posY;
 		}
 		lastTime = timeNow;
 	}
@@ -178,8 +236,24 @@ var gl;
 		return false;
 	}
 
+	
+	var mouseX = 0;
+	var mouseY = 0;
+	var firstMouseMove = true;
+	
 	function handleMouseMove(event) {
-		mouse.handleMouseMove(event);
+		
+		mouseX = event.clientX;
+		mouseY = event.clientY;
+		
+		if (firstMouseMove) {
+			firstMouseMove = false;
+			return false;
+		}
+		
+		
+		
+		
 		return false;
 	}
 	
@@ -188,10 +262,17 @@ var gl;
 	var player;
 	var playerHighlight;
 	
+	var screenWidth = 0;
+	var screenHeight = 0;
+	
 	function webGLStart() {
 		var canvas = document.getElementById("canvas");
 		initGL(canvas);
 		initShaders();
+		
+		screenHeight = canvas.height;
+		screenWidth = canvas.width;
+		
 		
 		player = getCube();
 		player.texture = new Texture("companion.png");

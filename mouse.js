@@ -1,5 +1,8 @@
 var mouse = {
 	mouseDown: false,
+	
+	x: 0,
+	y: 0,
 
 	handleMouseDown: function (event) {
 		this.mouseDown = true;
@@ -28,7 +31,7 @@ var mouse = {
 
 		mat4.multiply(newRotationMatrix, moonRotationMatrix, moonRotationMatrix);
 
-		this.lastMouseX = newX
-		this.lastMouseY = newY;
+		this.x = newX
+		this.y = newY;
 	}
 }
